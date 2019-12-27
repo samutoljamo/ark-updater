@@ -1,6 +1,6 @@
 import valve
 from valve.source.a2s import ServerQuerier
-from .rcon import RCON, RCON
+from .rcon import RCON, RCONTimeoutError
 import subprocess
 import os, re
 import time, threading
@@ -33,10 +33,10 @@ def stop_server(address, password, save=True):
     try:
         with RCON(address, password, timeout=5) as rcon:
             if save:
-                rcon("saveworld")
+                logger.info(rcon("saveworld"))
                 time.sleep(10)
-            rcon("doexit")
-    except TimeoutError:
+            logger.info(rcon("doexit"))
+    except RCONTimeoutError:
         logger.error("Failed to connect to RCON. Make sure you have RCON enabled and correct values in updater.ini file")
         exit(-1)
 
@@ -44,8 +44,8 @@ def stop_server(address, password, save=True):
 def broadcast(message, address, password):
     try:
         with RCON(address, password, timeout=5) as rcon:
-            rcon(f"broadcast {message}")
-    except TimeoutError:
+            logger.info(rcon(f"broadcast {message}"))
+    except RCONTimeoutError:
         logger.error("Failed to connect to RCON. Make sure you have RCON enabled and correct values in updater.ini file")
         exit(-1)
 

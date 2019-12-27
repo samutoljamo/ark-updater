@@ -1,9 +1,30 @@
 from valve.rcon import RCON as r
-from valve.rcon import RCONMessage, RCONError, RCONTimeoutError
+from valve.rcon import RCONMessage, RCONError, RCONTimeoutError, RCONMessageError, _ResponseBuffer
 
 import functools
 
+
+class ResponseBuffer(_ResponseBuffer):
+    def _consume(self):
+        """Attempt to parse buffer into responses.
+
+        This may or may not consume part or the whole of the buffer.
+        """
+        while self._buffer:
+            try:
+                message, self._buffer = RCONMessage.decode(self._buffer)
+            except RCONMessageError:
+                return
+            else:
+                self._enqueue_or_discard(message)
+
 class RCON(r):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._responses = ResponseBuffer()
+
+
     def _ensure(state, value=True):  # pylint: disable=no-self-argument
         """Decorator to ensure a connection is in a specific state.
 
@@ -45,4 +66,18 @@ class RCON(r):
         else:
             self._responses.discard()
             self._read()
+
+
+    def _request(self, type_, body):
+        """Send a request to the server.
+
+        This sends an encoded message with the given type and body to the
+        server. The sent message will have an ID of zero.
+
+        :param RCONMessage.Type type_: the type of message to send.
+        :param body: the body of the message to send as either a bytestring
+            or Unicode string.
+        """
+        request = RCONMessage(5, type_, body)
+        self._socket.sendall(request.encode())
 
