@@ -2,7 +2,7 @@ import time
 import logging
 
 from.config import get_config
-from .utils import get_version, get_num_players, update_server, start_server, stop_server, broadcast, loop
+from .utils import get_version, get_num_players, update_server, start_server, stop_server, broadcast, loop, server_online
 from .rcon import RCON
 
 logger = logging.getLogger(__name__)
@@ -29,11 +29,14 @@ class Updater:
             self._broadcast("Update found. The server will be updated as soon as all players have left the server")
             self.update_server()
             self.buildid = new_version
-            self.run()
+            self.run(first=False)
         else:
             logger.info("No update found")
 
-    def run(self):
+    def run(self, first=True):
+        if not first:
+            while not server_online((self.address, self.queryport)):
+                time.sleep(self.sleep)
         self.exit = loop(self.check_for_updates, minutes=1)
 
     @property
