@@ -6,8 +6,18 @@ TEMPLATE = {
         "address":"127.0.0.1",
         "queryport":"27015",
         "rconport":"27020",
+        "password":"",
+        "startcommand": ""
+    },
+    "paths":{
+        "steamcmdpath": "",
+        "arkfolder": "",
+    },
+    "updater":{
+        "buildid": "0"
     }
 }
+
 INI_FILE_NAME = 'updater.ini'
 
 
@@ -32,15 +42,19 @@ class Parser(configparser.ConfigParser):
         with open(self.ini_file_name, 'w') as fp:
             self.write(fp)
 
+    def save_to_file(self):
+        with open(self.ini_file_name, 'w') as fp:
+            self.write(fp)
+
     def validate(self):
-        for section in self.sections():
-            needed_fields = self.default[section]
-            for field, value in needed_fields.items():
-                if field not in self[section]:
+        for section_name, value in self.default.items():
+            for field, value in value.items():
+                try:
+                    if field not in self[section_name]:
+                        return False
+                except KeyError:
                     return False
         return True
-
-
 
 def get_config():
     config = Parser(TEMPLATE, INI_FILE_NAME)
@@ -52,4 +66,4 @@ def get_config():
 
 if __name__ == "__main__":
     print(f"Running tests for {__file__}")
-    print(get_config()['server']["queryport"])
+    print(get_config())
