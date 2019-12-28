@@ -36,7 +36,7 @@ def stop_server(address, password, save=True):
                 logger.info(rcon("saveworld"))
                 time.sleep(10)
             logger.info(rcon("doexit"))
-    except RCONTimeoutError:
+    except (RCONTimeoutError, TimeoutError):
         logger.error("Failed to connect to RCON. Make sure you have RCON enabled and correct values in updater.ini file")
         exit(-1)
 
@@ -45,7 +45,7 @@ def broadcast(message, address, password):
     try:
         with RCON(address, password, timeout=5) as rcon:
             logger.info(rcon(f"broadcast {message}"))
-    except RCONTimeoutError:
+    except (RCONTimeoutError, TimeoutError):
         logger.error("Failed to connect to RCON. Make sure you have RCON enabled and correct values in updater.ini file")
         exit(-1)
 
