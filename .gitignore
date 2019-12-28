@@ -131,6 +131,4 @@ dmypy.json
 # Pycharm
 .idea/
 
-# ini file
-updater.ini
 
