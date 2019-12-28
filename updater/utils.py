@@ -21,10 +21,11 @@ def get_num_players(address):
         logger.error("Cannot connect, make sure updater.ini has the right values")
         exit(-1)
 
+
 def server_online(address):
     try:
         with ServerQuerier(address) as s:
-            s.ping()
+            s.info()
             return True
     except valve.source.NoResponseError:
         return False
