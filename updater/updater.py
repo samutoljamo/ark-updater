@@ -37,7 +37,7 @@ class Updater:
         if not first:
             while not server_online((self.address, self.queryport)):
                 time.sleep(self.sleep)
-        self.exit = loop(self.check_for_updates, minutes=1)
+        self.exit = loop(self.check_for_updates, hours=1)
 
     @property
     def address(self):
