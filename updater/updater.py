@@ -32,11 +32,15 @@ class Updater:
             self.run(first=False)
         else:
             logger.info("No update found")
+    
 
     def run(self, first=True):
-        if not first:
-            while not server_online((self.address, self.queryport)):
-                time.sleep(self.sleep)
+        if first:
+            if not server_online((self.address, self.queryport)):
+                self.update_server(False)
+                self.buildid = get_version(self.steamcmd)
+        while not server_online((self.address, self.queryport)): # wait for server to come alive
+            time.sleep(self.sleep)
         self.exit = loop(self.check_for_updates, hours=1)
 
     @property
@@ -77,12 +81,13 @@ class Updater:
     def _broadcast(self, message):
         broadcast(message, (self.address, self.rconport), self.password)
 
-    def update_server(self):
-        while get_num_players((self.address, self.queryport)) >= 1:
-            time.sleep(self.sleep)
-        stop_server((self.address, self.rconport), self.password)
-        # give some time for the server to stop
-        time.sleep(10)
+    def update_server(self, online=True):
+        if online:
+            while get_num_players((self.address, self.queryport)) >= 1:
+                time.sleep(self.sleep)
+            stop_server((self.address, self.rconport), self.password)
+            # give some time for the server to stop
+            time.sleep(10)
         update_server(self.steamcmd, self.arkfolder)
         start_server(self.arkfolder, self.config.get("server", "startcommand"))
 

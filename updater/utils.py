@@ -1,5 +1,6 @@
 import valve
 from valve.source.a2s import ServerQuerier
+from valve.source.messages import InfoRequest, LongField, ByteField, Message, StringField, InfoResponse
 from .rcon import RCON, RCONTimeoutError
 import subprocess
 import os, re
@@ -12,11 +13,29 @@ ARK_APPID = "376030"
 REGEX = r'"public"\n\t\t\t{\n\t\t\t\t"buildid"\t\t"(\d+)"'
 
 
+class InfoRequestChallenge(Message):
+    fields = (
+        ByteField("request_type", True, 0x54),
+        StringField("payload", True, "Source Engine Query"),
+        LongField("challenge", True)
+    )
+
+class InfoChallenge(Message):
+    fields = (
+        ByteField("response_type", validators=[lambda x: x==0x41]),
+        LongField("challenge")
+    )
+def info(s):
+    s.request(InfoRequest())
+    response = InfoChallenge.decode(s.get_response())
+    req = InfoRequestChallenge(challenge=response['challenge'])
+    s.request(req)
+    return InfoResponse.decode(s.get_response())
+
 def get_num_players(address):
     try:
         with ServerQuerier(address) as s:
-            info = s.info()
-            return info["player_count"]
+            return info(s)["player_count"]
     except valve.source.NoResponseError:
         logger.error("Cannot connect, make sure updater.ini has the right values")
         exit(-1)
@@ -25,7 +44,7 @@ def get_num_players(address):
 def server_online(address):
     try:
         with ServerQuerier(address) as s:
-            s.info()
+            info(s)
             return True
     except valve.source.NoResponseError:
         return False
@@ -38,7 +57,7 @@ def stop_server(address, password, save=True):
                 time.sleep(10)
             logger.info(rcon("doexit"))
     except (RCONTimeoutError, TimeoutError):
-        logger.error("Failed to connect to RCON. Make sure you have RCON enabled and correct values in updater.ini file")
+        logger.error("Failed to connect using RCON. Make sure you have RCON enabled and correct values in updater.ini file")
         exit(-1)
 
 
@@ -47,7 +66,7 @@ def broadcast(message, address, password):
         with RCON(address, password, timeout=5) as rcon:
             logger.info(rcon(f"broadcast {message}"))
     except (RCONTimeoutError, TimeoutError):
-        logger.error("Failed to connect to RCON. Make sure you have RCON enabled and correct values in updater.ini file")
+        logger.error("Failed to connect using RCON. Make sure you have RCON enabled and correct values in updater.ini file")
         exit(-1)
 
 
@@ -59,7 +78,7 @@ def get_version(path):
 
 
 def start_server(path, args):
-    return subprocess.Popen([path + "ShooterGame/Binaries/Win64/ShooterGameServer.exe", args])
+    return subprocess.Popen([path + "/ShooterGame/Binaries/Win64/ShooterGameServer.exe", args])
 
 
 def update_server(path, ark_dir):
