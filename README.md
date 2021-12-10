@@ -12,3 +12,5 @@ fill the updater.ini file(dont fill the buildid)
 run the program using python
 `python3 main.py`
 
+This was originally created with python 3.3 so it might contain a lot of bugs
+
